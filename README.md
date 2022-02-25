@@ -1,14 +1,15 @@
  ![default](https://github.com/a-parhom/LightlyShaders/blob/master/screenshot.png)
  This is a fork of Luwx's [LightlyShaders](https://github.com/Luwx/LightlyShaders), which in turn is a fork of [ShapeCorners](https://sourceforge.net/projects/shapecorners/). 
 
- This fork adds following functionality:
+ This fork fixes the infamous [bug](https://bugs.kde.org/show_bug.cgi?id=395725) with blurred corners, though in a somehow hacky way. 
+ 
+ Also, it adds the following functionality:
  - an additional outer dark outline; 
  - an option to make dark outline totally black (good with dark themes);
  - an option to disable plugin for maximized windows;
  - an option to use squircled corners instead of rounded (based on code from ZacharyTalis's [ShapeCorners fork](https://github.com/ZacharyTalis/ShapeCorners)).
 
- Also it fixes the infamous [bug](https://bugs.kde.org/show_bug.cgi?id=395725) with blurred corners, though in a somehow hacky way. 
- 
+
  # Warnings:
 
  ## 1. This effect is basically a hack!
@@ -47,7 +48,7 @@ sudo zypper install git cmake gcc-c++ extra-cmake-modules libqt5-qttools-devel l
 ```
 git clone https://github.com/a-parhom/LightlyShaders
 
-cd LightlyShaders; mkdir qt5build; cd qt5build; cmake ../ -DCMAKE_INSTALL_PREFIX=/usr -DQT5BUILD=ON && make && sudo make install && (kwin_x11 --replace &)
+cd LightlyShaders; mkdir qt5build; cd qt5build; cmake ../ -DCMAKE_INSTALL_PREFIX=/usr && make && sudo make install && (kwin_x11 --replace &)
 ```
  
  
