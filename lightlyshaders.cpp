@@ -181,7 +181,7 @@ LightlyShadersEffect::windowAdded(EffectWindow *w)
             || (w->windowClass().contains("reaper", Qt::CaseInsensitive) && !hasShadow(w))))
         return;
 
-    if(w->windowClass().contains("jetbrains-studio", Qt::CaseInsensitive) && w->caption().contains(QRegularExpression ("win[0-9]+")))
+    if(w->windowClass().contains("jetbrains", Qt::CaseInsensitive) && w->caption().contains(QRegularExpression ("win[0-9]+")))
         return;
 
     if (w->windowClass().contains("plasma", Qt::CaseInsensitive) && !w->isNormalWindow() && !w->isDialog() && !w->isModal())
@@ -191,7 +191,11 @@ LightlyShadersEffect::windowAdded(EffectWindow *w)
             || w->isFullScreen()
             || w->isPopupMenu()
             || w->isTooltip() 
-            || w->isSpecialWindow())
+            || w->isSpecialWindow()
+            || w->isDropdownMenu()
+            || w->isPopupWindow()
+            || w->isLockScreen()
+            || w->isSplash())
         return;
 
     QRect maximized_area = effects->clientArea(MaximizeArea, w);
@@ -391,13 +395,16 @@ LightlyShadersEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, 
         repaintRegion += rect[i];
     }
 
-    m_clip[w] = QRegion();
+    QRegion clip = QRegion();
 
     const auto stackingOrder = effects->stackingOrder();
     bool bottom_w = true;
     for (EffectWindow *window : stackingOrder) {
-        if(!window->isOnCurrentDesktop()
-            || window->isMinimized()
+        if(!window->isVisible()
+            || window->isDeleted()
+            || window->opacity() != 1.0
+            || window->isUserMove()
+            || window->isUserResize()
             || window->windowClass().contains("latte-dock", Qt::CaseInsensitive)
             || window->windowClass().contains("lattedock", Qt::CaseInsensitive)
             || window->windowClass().contains("peek", Qt::CaseInsensitive)
@@ -405,8 +412,13 @@ LightlyShadersEffect::prePaintWindow(EffectWindow *w, WindowPrePaintData &data, 
         ) continue;
 
         bottom_w = false;
-        if(!bottom_w && window != w)
-            m_clip[w] += window->frameGeometry().adjusted(m_size, m_size, -m_size, -m_size);
+        if(window != w)
+            clip += window->frameGeometry().adjusted(m_size, m_size, -m_size, -m_size);
+    }
+
+    if(m_clip[w] != clip) {
+        m_clip[w] = clip;
+        m_diff_update[w] = true;
     }
 
     repaintRegion -= m_clip[w];
@@ -606,7 +618,7 @@ LightlyShadersEffect::fillRegion(const QRegion &reg, const QColor &c)
     vbo->setUseColor(true);
     vbo->setColor(c);
     QVector<float> verts;
-    foreach (const QRect & r, reg.rects())
+    for (const QRect &r : reg)
     {
         verts << r.x() + r.width() << r.y();
         verts << r.x() << r.y();
@@ -663,8 +675,8 @@ LightlyShadersEffect::getShadowDiffs(EffectWindow *w, const QRect* rect, QList<G
         d.setProjectionMatrix(projection);
 
         int mask = PAINT_WINDOW_TRANSFORMED | PAINT_WINDOW_TRANSLUCENT;
-        QRegion region = QRegion(r2[0]);
-        region += r2[1];
+        QRegion region = QRegion(r2[Top]);
+        region += r2[Bottom];
         GLVertexBuffer::setVirtualScreenGeometry(frame_geo);
 
         effects->drawWindow(w, mask, region, d);
@@ -681,7 +693,9 @@ LightlyShadersEffect::getShadowDiffs(EffectWindow *w, const QRect* rect, QList<G
     const int samplerSizeLocation = m_diff_shader->uniformLocation("sampler_size");
     ShaderManager *sm = ShaderManager::instance();
     sm->pushShader(m_diff_shader);
-    int n = out_of_screen ? NShad : NTex;
+    int n;
+    if(out_of_screen) n = NShad;
+    else n = NTex;
     const QRect *r = out_of_screen ? r2 : r4;
     GLTexture white_tex = GLTexture(GL_TEXTURE_RECTANGLE);
     if(out_of_screen) {

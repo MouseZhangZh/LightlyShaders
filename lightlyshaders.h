@@ -38,10 +38,10 @@ public:
     static bool enabledByDefault();
     
     void setRoundness(const int r);
-    void reconfigure(ReconfigureFlags flags);
-    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds time);
-    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data);
-    virtual int requestedEffectChainPosition() const { return 99; }
+    void reconfigure(ReconfigureFlags flags) override;
+    void prePaintWindow(EffectWindow* w, WindowPrePaintData& data, std::chrono::milliseconds time) override;
+    void paintWindow(EffectWindow* w, int mask, QRegion region, WindowPaintData& data) override;
+    virtual int requestedEffectChainPosition() const override { return 99; }
 
     enum { RoundedCorners = 0, SquircledCorners };
 
@@ -62,7 +62,7 @@ private:
     void getShadowDiffs(EffectWindow *w, const QRect* rect, QList<GLTexture> &empty_corners_tex, bool out_of_screen);
 
     enum { TopLeft = 0, TopRight, BottomRight, BottomLeft, NTex };
-    const int NShad = 2;
+    enum { Top = 0, Bottom, NShad };
     GLTexture *m_tex[NTex];
     GLTexture *m_rect[NTex];
     GLTexture *m_dark_rect[NTex];

@@ -57,7 +57,7 @@ public:
 };
 
 LightlyShadersConfig::LightlyShadersConfig(QWidget* parent, const QVariantList& args)
-    : KCModule(KAboutData::pluginData(QStringLiteral("kwin4_effect_lightlyshaders")), parent, args)
+    : KCModule(parent, args)
     , d(new Private(this))
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
